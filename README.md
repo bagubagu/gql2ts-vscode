@@ -15,13 +15,16 @@ Select `gql2ts: create TS Interfaces` from command palette.
   ```sh
   npm install apollo-codegen get-graphql-schema -g
   ```
-  
-  This extension also require `schema.json` to be available. It looks for `schema.json` in the workspace root folder by default. You can configure the location of `schema.json` with extension setting `gql2ts.schemaJson: 'path/to/shema.json'`.
 
+  This extension requires `schema.json` to be available. Use `get-graphql-schema` to retrieve `schema.json`
+  from your server.
+  
   ```sh
   get-graphql-schema https://your.graphql.endpoint/graphql --json > schema.json
   ```
-  
+
+  By default gql2ts looks for `schema.json` in the workspace root folder. You can configure the location of `schema.json` with extension setting `gql2ts.schemaJson: 'path/to/shema.json'`.
+
 ## Extension Settings
 
   This extension contributes the following settings:
@@ -30,9 +33,9 @@ Select `gql2ts: create TS Interfaces` from command palette.
 
 ## Known Issues
 
-At the time of writing, `apollo-codegen` npm is [not working as expected](https://github.com/apollographql/apollo-codegen/issues/144).
+  At the time of writing, `apollo-codegen` npm is [not working as expected](https://github.com/apollographql/apollo-codegen/issues/144).
 
-Workaround: fork/clone apollo-codegen repo, build, then npm link the resulting node_module.
+  Workaround: fork/clone apollo-codegen repo, build, then npm link the resulting node_module.
 
 ## Release Notes
 

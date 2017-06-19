@@ -2,7 +2,7 @@
     "name": "gql2ts",
     "displayName": "gql2ts",
     "description": "Generate typescript interfaces automatically from gql template string",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "repository": {
         "url": "https://github.com/bagubagu/gql2ts-vscode"
     },
