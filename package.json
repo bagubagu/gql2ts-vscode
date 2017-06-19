@@ -1,0 +1,55 @@
+{
+    "name": "gql2ts",
+    "displayName": "gql2ts",
+    "description": "Generate typescript interfaces automatically from gql template string",
+    "version": "0.1.0",
+    "repository": {
+        "url": "https://github.com/bagubagu/gql2ts-vscode"
+    },
+    "publisher": "bagubagu",
+    "engines": {
+        "vscode": "^1.13.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onLanguage:typescript",
+        "onCommand:extension.gql2ts"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.gql2ts",
+                "title": "gql2ts: create typescript interfaces"
+            }
+        ],
+        "configuration": {
+            "title": "gql2ts Configuration",
+            "properties": {
+                "gql2ts.schemaJson": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": "schema.json",
+                    "description": "Path of schema.json relative to project root"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "tsc -p ./",
+        "compile": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.0.3",
+        "vscode": "^1.0.0",
+        "mocha": "^2.3.3",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+    }
+}
