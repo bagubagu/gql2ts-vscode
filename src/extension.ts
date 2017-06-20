@@ -1,95 +1,95 @@
 'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
+import { exec } from 'shelljs';
 
-// Settings as defined in VS Code
-interface Settings {
-    gql2ts: {
-        enable: boolean;
-        schemaJson: string;
-    };
-}
+const subscriptions: vscode.Disposable[] = [];
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
+export async function activate(context: vscode.ExtensionContext) {
     console.log('Extension "gql2ts" activated.');
 
-    const settings: Settings = null;
+    // vscode.workspace.onDidChangeConfiguration(appendInterfaces, null, subscriptions);
+    // vscode.workspace.onDidChangeTextDocument(appendInterfaces, null, subscriptions);
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
     let disposable = vscode.commands.registerCommand('extension.gql2ts', () => {
-        // The code you place here will be executed every time your command is executed
-        console.log('creating interfaces..');
+        appendInterfaces();
+    });
+    subscriptions.push(disposable);
+}
 
-        const activeEditor = vscode.window.activeTextEditor;
+export function deactivate() {
+    vscode.Disposable.from(...subscriptions).dispose();
+}
 
-        if (!activeEditor) {
-            console.log('no active editor');
-            return;
-        }
+async function appendInterfaces() {
+    const marker = 'start of gql2ts';
+    const previous = await getPrevious(marker);
 
-        const MARKER = 'start of gql2ts';
-        const text = activeEditor.document.getText();
-        const regex = new RegExp(`${MARKER}`, 'g');
-        const match = regex.exec(text);
+    if (previous) {
+        await clearPrevious(previous);
+    }
 
-        if (match) {
-            clearLines(match).then(addLines);
-        } else {
-            addLines();
-        }
+    const content = await generateInterfaces(marker);
+    await addLines(content);
+    vscode.window.showInformationMessage('Interface(s) created');
+}
 
-        function clearLines(match) {
-            const matchPos = activeEditor.document.positionAt(match.index);
-            const startPos = matchPos.with(matchPos.line, 0);
-            const endPos = new vscode.Position(activeEditor.document.lineCount + 1, 0);
+async function generateInterfaces(marker): Promise<any> {
+    const fileName = vscode.window.activeTextEditor.document.fileName;
+    const lineCount = vscode.window.activeTextEditor.document.lineCount;
+    const rootPath = vscode.workspace.rootPath;
 
-            return activeEditor.edit(editBuilder =>
-                editBuilder.delete(new vscode.Range(startPos, endPos))
-            );
-        }
+    let schemaFile = await vscode.workspace.findFiles('**/schema.json', '**/node_modules/**', 5)
+        .then(uris => uris[0].fsPath);
 
-        function addLines() {
-            const fileName = activeEditor.document.fileName;
-            const lineCount = activeEditor.document.lineCount;
-            const rootPath = vscode.workspace.rootPath;
-            // FIXME
-            // Following does not work. Run time error.
-            //
-            // const configSchemaJson = vscode.workspace.getConfiguration('gql2ts').get('schemaJson');
-            // const schemaJson = configSchemaJson ? configSchemaJson : rootPath + '/schema.json';
-            const schemaJson = `${rootPath}/schema.json`;
-            const command = `apollo-codegen generate ${fileName} --target ts --schema ${schemaJson}`;
+    let configSchemaFile = null;
+    configSchemaFile = vscode.workspace.getConfiguration('gql2ts').get('schemaFile');
 
-            const child = exec(command, (err, stdout, stderr) => {
+    if (configSchemaFile) {
+        schemaFile = `${vscode.workspace.rootPath}/${configSchemaFile}`;
+    }
 
-                if (err) {
-                    console.error(err);
-                    return;
-                }
+    const command = `apollo-codegen generate ${fileName} --target ts --schema ${schemaFile}`;
+    console.log('command:', command);
 
-                activeEditor.edit(editBuilder => {
-
-                    editBuilder.insert(new vscode.Position(lineCount, 0), '\n');
-                    editBuilder.insert(
-                        new vscode.Position(lineCount + 1, 0),
-                        `// --- ${MARKER}: DO NOT DELETE AND DO NOT ADD ANYTHING BEYOND THIS SECTION ---`);
-                    editBuilder.insert(new vscode.Position(lineCount + 2, 0), '\n');
-                    editBuilder.insert(new vscode.Position(lineCount + 4, 0), stdout);
-                })
-                    .then(_ => vscode.window.showInformationMessage('Interface(s) created'));
-            });
-        }
+    return new Promise((resolve, reject) => {
+        exec(command, function (code, stdout, stderr) {
+            if (code !== 0) {
+                return reject('exec error');
+            }
+            return resolve(stdout);
+        });
     });
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() { }
+async function getPrevious(marker): Promise<any> {
+    const activeTextEditor = vscode.window.activeTextEditor;
+    const text = activeTextEditor.document.getText();
+    const regex = new RegExp(`${marker}`, 'g');
+    const match = regex.exec(text);
+    return Promise.resolve(match);
+}
+
+async function clearPrevious(match) {
+    const matchPos = vscode.window.activeTextEditor.document.positionAt(match.index);
+    const startPos = matchPos.with(matchPos.line, 0);
+    const endPos = new vscode.Position(vscode.window.activeTextEditor.document.lineCount + 1, 0);
+
+    return vscode.window.activeTextEditor.edit(editBuilder =>
+        editBuilder.delete(new vscode.Range(startPos, endPos))
+    );
+}
+
+async function addLines(content) {
+    const marker = 'start of gql2ts';
+    const lineCount = vscode.window.activeTextEditor.document.lineCount;
+
+    return vscode.window.activeTextEditor.edit(editBuilder => {
+
+        editBuilder.insert(new vscode.Position(lineCount, 0), '\n');
+        editBuilder.insert(
+            new vscode.Position(lineCount + 1, 0),
+            `// --- ${marker}: DO NOT EDIT THIS LINE AND ANYTHING BELOW ---`);
+        editBuilder.insert(new vscode.Position(lineCount + 2, 0), '\n');
+        editBuilder.insert(new vscode.Position(lineCount + 4, 0), content);
+    })
+}
