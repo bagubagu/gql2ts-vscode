@@ -39,6 +39,4 @@ Select `gql2ts: create TS Interfaces` from command palette.
 
 ## Release Notes
 
-### 0.1.0
-
-  Initial release
+See [CHANGELOG](https://github.com/bagubagu/gql2ts-vscode/blob/master/CHANGELOG.md)
